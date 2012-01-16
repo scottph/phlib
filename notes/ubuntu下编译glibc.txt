@@ -1,0 +1,10 @@
+ubuntu下编译glibc
+
+1. patch
+
+2.
+export CFLAGS="-O2 -U_FORTIFY_SOURCE  -march=i686 -mtune=native -fno-stack-protector -fno-stack-protector-all"
+../configure --prefix=/usr/src/glibc/eglibc-2.13/prefix
+
+3.
+make clean; make

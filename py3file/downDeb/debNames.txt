@@ -1,0 +1,16 @@
+vim
+subversion
+distcc
+ccache
+git
+kvm
+ssh
+indent
+
+flex
+bison
+zlib1g-dev
+ncurses-dev
+gcc
+g++
+make

@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<xmlMandatorySingleRootNode>
+
+<object name="InternetGatewayDevice." shortObjectName="IGDObject" specSource="TR98" profile="Baseline:1" requirements="P" supportLevel="Present" />
+  <description source="TRx">The top-level object for an Internet Gateway &#10;Device. </description>
+
+  <parameter name="DeviceSummary" type="string" specSource="TR98" profile="Baseline:1" requirements="R" supportLevel="ReadOnly" maxLength="1024" />
+    <description source="TRx">As defined in [3].</description>
+  <parameter name="LANDeviceNumberOfEntries" type="unsignedInt" specSource="TR98" profile="Baseline:1" requirements="R" supportLevel="ReadOnly" alwaysWriteToConfigFile="true" />
+    <description source="TRx">Number of instances of LANDevice.</description>
+
+
+<object name="InternetGatewayDevice.X_CT-COM_UplinkQoS." shortObjectName="CtQosUplinkObject" specSource="Custom" profile="Baseline:1" supportLevel="Present" />
+  <description source="custom">China telecom Qos</description>
+  <parameter name="Mode" type="string" specSource="Custom" profile="Unspecified" supportLevel="ReadWrite" defaultValue="" maxLength="32" />
+  <parameter name="Enable" type="boolean" specSource="Custom" profile="Unspecified" supportLevel="ReadWrite" defaultValue="false" />
+    <description source="custom">china telecom Qos Feature</description>
+ 
+
+<object name="InternetGatewayDevice.X_BROADCOM_COM_GponOmciStats." shortObjectName="GponOmciStatsObject" specSource="Broadcom" profile="X_BROADCOM_COM_Gpon:1" supportLevel="Present" />
+  <description source="BROADCOM">This object holds the statistics counters of the OMCI Stack</description>
+  <parameter name="TxErrors" type="unsignedInt" specSource="Broadcom" profile="Unspecified" supportLevel="ReadOnly" defaultValue="0" />
+    <description source="BROADCOM">Total number of transmission errors</description>
+
+
+<vsaInfo>
+
+<validstringarray name="ADSLLinkPowerState" />
+  <element>L3</element>
+  <element>L2</element>
+  <element>L0</element>
+
+
+<validstringarray name="wifiIntfStatusValues" />
+  <element>Up</element>
+  <element>Error</element>
+  <element>Disabled</element>
+
+</vsaInfo>
+
+
+
+<profileInfo>
+<profile name="Baseline:1" /> 
+<profile name="X_BROADCOM_COM_Baseline:1" /> 
+<profile name="Unspecified" /> 
+</profileInfo>
+
+
+</xmlMandatorySingleRootNode>

@@ -1,0 +1,128 @@
+<html>
+<head>
+</head>
+
+<body>
+<form name="allElements">
+  <table border="border" cellpadding="5">
+    <tr>
+      <td>Username:<br>[1]<input type="text" name="username" size="15"></td>
+      <td>Pwd:<br>[2]<input type="password" name="pwd" size="10"></td>
+      <td rowspan="4">Input Events[3]<br>
+          <textarea name="textarea" rows="20" cols="28"></textarea>
+      </td>
+      <td rowspan="4" align="center" valign="center">
+        [9]<input type="button" value="clear" name="clearBtn"><br>
+	[10]<input type="submit" name="submitBtn" value="submit"><br>
+	[11]<input type="reset" name="resetBtn" value="reset">
+      </td>	
+    </tr>
+    <tr>
+      <td colspan="2">
+        Filename: [4]<input type="file" name="file" size="15">
+      </td>
+    </tr>
+    <tr>
+      <td>MyComputerPeripherals:<br>
+        [5]<input type="checkbox" name="extras" value="burner">DVD Writer<br>
+	[5]<input type="checkbox" name="extras" value="printer">Printer<br>
+      </td>
+      <td>MyWebBrower:<br>
+        [6]<input type="radio" name="browser" value="ff">Firefox<br>
+	[6]<input type="radio" name="browser" value="ie">InternetExplorer<br>
+      </td>
+    </tr>
+
+    <tr>
+      <td>MyHobbies:[7]<br>
+        <select multiple="multiple" name="hobbies" size="4">
+	  <option value="programming">Hacking Javascript
+	  <option value="surfing">Surfing the Web
+	</select>
+      </td>
+      
+      <td align="center" valign="center">MyFavoriteColor:<br>[8]
+        <select name="color">
+	  <option value="red">Red
+	  <option value="green">Green
+	</select>
+      </td>
+    </tr>
+  </table>
+</form>
+
+<div align="center">
+  <table border="4" bgcolor="pink" cellspacing="1" cellpadding="4">
+    <tr>
+      <td align="center"><b>Form Elements</b></td>
+      <td>[1] Text</td> <td>[2] Pwd</td> <td>[3] Textarea</td>
+      <td>[4] FileU</td> <td>[5] Checkbox</td>
+    </tr>
+    <tr>
+      <td>[6] Radio</td> <td>[7] Select(list)</td>
+      <td>[8] Select(menu)</td> <td>[9] Button</td>
+      <td>[10] Submit</td> <td>[11] Reset</td>
+    </tr>
+  </table>
+</div>
+
+<script>
+  function report(v_elem, event)
+  {
+      if ((v_elem.type == "select-one") || (v_elem.type == "select-multiple"))
+      {
+	  value = " ";
+	  for(var i=0; i < v_elem.option.length;i++)
+	  {
+	      if (v_elem.options[i].selected)
+		  value += v_elem.options[i].value + " ";
+	  }
+      }
+      else if (v_elem.type == "textarea")
+	  value = "...";
+      else value = v_elem.value;
+
+      var msg = event + ": " + v_elem.name + ' (' + value + ')\n';
+      var ta = v_elem.form.textarea;
+      ta.value = ta.value + msg;
+
+  }
+
+  function addHandlers(v_form)
+  {
+      for(var i=0; i<v_form.elements.length; i++)
+      {
+	  var elem = v_form.elements[i];
+	  elem.onclick = function(){ report(this, 'Click');}
+	  elem.onchange = function(){ report(this, 'Change');}
+	  elem.onfocus = function() { report(this, 'Focus');}
+	  elem.onblur = function() { report(this, 'Blur');}
+	  elem.onselect = function() { report(this, 'Select');}
+      }
+
+      v_form.clearBtn.onclick = function() 
+      {
+	  this.form.textarea.value = ''; 
+	  report(this, 'Click');
+      }
+
+      v_form.submitBtn.onclick = function()
+      {
+	  report(this, 'Click'); 
+	  return false;
+      }
+
+      v_form.resetBtn.onclick = function()
+      {
+	  this.form.reset(); 
+	  report(this, 'Click'); 
+	  return false;
+      }
+  } 
+
+  addHandlers(document.allElements);
+</script>
+
+</body>
+
+</html>

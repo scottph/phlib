@@ -1,0 +1,3 @@
+ubuntu下syslog.conf的位置
+
+syslog.conf改名为rsyslog.conf, 在/etc下面

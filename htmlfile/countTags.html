@@ -1,0 +1,23 @@
+<html>
+<head>
+<title>countTagNum</title>
+<script>
+  function countTags(v_node)
+  {
+    var numTags = 0;
+    if (v_node.nodeType == 1)
+      numTags++;	
+    var children = v_node.childNodes;
+    for(var i = 0; i< children.length;i++)
+    {
+	numTags += countTags(children[i]);
+    }
+    return numTags;
+  }
+</script>
+</head>
+
+<body onload="alert('This document has ' + countTags(document) + ' tags')">
+  This is a <i>sample</i> document.
+</body>
+</html>

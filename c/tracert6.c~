@@ -1,0 +1,247 @@
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
+#include <netdb.h>
+#include <sys/time.h>
+#include <signal.h>
+#include <pthread.h>
+#include <error.h>
+
+static unsigned short g_iSeq;
+
+struct S_icmp6_hdr
+{
+	unsigned char type;	/* type field */
+	unsigned char code;	/* code field */
+	unsigned short cksum;	/* checksum field */
+	unsigned short id;
+	unsigned short seq;
+};
+
+unsigned short 
+get_csum (const void *ptr, size_t len)
+{
+	const unsigned short *p = (const unsigned short *) ptr;
+	size_t nw = len / 2;
+	unsigned int sum = 0;
+	unsigned short res;
+
+	while (nw--)
+		sum += *p++;
+
+	if (len & 0x1)
+		sum += htons (*((unsigned char *) p) << 8);
+
+	sum = (sum >> 16) + (sum & 0xffff);
+	sum += (sum >> 16);
+
+	res = ~sum;
+	if (!res)
+		res = ~0;
+
+	return res;
+}
+
+static void
+icmp_pack (struct S_icmp6_hdr *v_pst6Hdr, int v_iSeq)
+{
+	v_pst6Hdr->type = ICMP6_ECHO_REQUEST;
+	v_pst6Hdr->code = 0;
+	v_pst6Hdr->cksum = 0;
+	v_pst6Hdr->id = htons (0);
+	v_pst6Hdr->seq = htons (v_iSeq);
+
+	v_pst6Hdr->cksum = get_csum (v_pst6Hdr, 8);
+}
+
+static void
+icmp_sigint (int v_sigNo)
+{
+	printf ("%s: caught signal...\n", __FUNCTION__);
+	exit (0);
+}
+
+
+static void *
+icmp_send (void *v_pszDst)
+{
+	int iLoop, iMaxTtl = 10;
+	int iSock = 0;
+	struct S_icmp6_hdr *pstIcmp6Hdr = NULL;
+	char *pszIcmp6 = NULL;
+	int iIcmp6Len = 0;
+	struct sockaddr_in6 stDst;
+	char *pszDst = NULL;
+	int iRet = 0;
+
+	printf ("%s entering...\n", __FUNCTION__);
+	signal (SIGINT, icmp_sigint);
+
+	//dst ip6 addr
+	pszDst = (char *)v_pszDst;
+
+	iSock = socket (AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
+	if (iSock < 0)
+	{
+		perror ("socket error...");
+		return;
+	}
+
+        stDst.sin6_family = AF_INET6;
+        stDst.sin6_port = 0;
+        stDst.sin6_flowinfo = 0;
+        stDst.sin6_scope_id = 0;
+        
+        iRet = inet_pton(AF_INET6, pszDst, &stDst.sin6_addr);	
+	if (iRet < 0)
+	{
+	    printf("bad ipv6 address...\n");
+	    return;
+	}
+
+        iIcmp6Len = sizeof(*pstIcmp6Hdr);
+	pszIcmp6 = (char *)calloc(iIcmp6Len, sizeof(char));
+
+	for (iLoop = 0; iLoop < iMaxTtl; iLoop++)
+	{
+		icmp_pack ((struct S_icmp6_hdr *)pszIcmp6, g_iSeq);
+		sendto(iSock, pszIcmp6, iIcmp6Len, 0, (struct sockaddr *)&stDst, sizeof(stDst));
+		g_iSeq++;
+		sleep (1);
+	}
+
+	free(pszIcmp6);
+	close (iSock);
+
+	return;
+}
+
+
+static int
+icmp_unpack (void *v_pvFrom, char *v_pszBuf, int v_iLen)
+{
+    //struct ip *pstIp = NULL;
+    struct S_icmp6_hdr *pstIcmp6Hdr = NULL;
+    int iRet = 0;
+    int iIpHdrLen = 0;
+    int iIcmpLen = 0;
+    char acFrom[512] = NULL;
+
+    (char *)inet_ntop(AF_INET6, v_pvFrom, acFrom, sizeof(acFrom));
+    pstIcmp6Hdr = (struct S_icmp6_hdr *)v_pszBuf;
+    iIcmpLen = v_iLen;
+
+    if (iIcmpLen < 8)
+    {
+	printf("bad icmp len...\n");
+	return -1;
+    }
+
+    switch (pstIcmp6Hdr->type)
+    {
+        case ICMP6_ECHO_REPLY:
+	    printf("%d bytes from %s: seq = %d...\n", 
+		    iIcmpLen, acFrom, pstIcmp6Hdr->seq);
+	    iRet = 0;
+            break;
+
+	case ICMP6_TIME_EXCEEDED:
+	    iRet = 0;
+	    break;
+
+        default:
+	    printf("unknown icmp packet...\n");
+	    iRet = -1;
+	    break;
+    }
+
+    return iRet;
+}
+
+
+static void *
+icmp_rcv (void *v_argv)
+{
+	int iSock = 0;
+	struct timeval stTv;
+	int iRet = 0;
+	char acRcvBuf[512];
+	int iRcvLen = 0;
+        struct msghdr stMsg;
+	struct iovec stIov;
+struct sockaddr_in6 stFrom;
+
+	printf ("%s entering...\n", __FUNCTION__);
+	signal (SIGINT, icmp_sigint);
+
+	memset (&stMsg, 0, sizeof (stMsg));
+		stMsg.msg_name = &stFrom;
+			stMsg.msg_namelen = sizeof (stFrom);
+				stMsg.msg_control = NULL;
+					stMsg.msg_controllen = 0;
+
+						stIov.iov_base = acRcvBuf;
+							stIov.iov_len = sizeof (acRcvBuf);
+								stMsg.msg_iov = &stIov;
+									stMsg.msg_iovlen = 1;
+
+
+
+	iSock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
+	if (iSock < 0)
+	{
+		perror ("socket error...");
+		return;
+	}
+
+	stTv.tv_usec = 200;
+	stTv.tv_sec = 0;
+
+	while (1)
+	{
+                        iRcvLen = recvmsg(iSock, &stMsg,0);
+
+		        iRet = icmp_unpack(  ,acRcvBuf, iRcvLen);
+	}
+
+	close (iSock);
+	return;
+}
+
+
+int
+main (int argc, char *argv[])
+{
+	int iRet = 0;
+	pthread_t sendId, rcvId;
+	char *pszDst = NULL;
+
+        if (argc < 2)
+	{
+	    printf("bad input...\n");
+	    return -1;
+	}
+
+        pszDst = argv[1];
+
+	iRet = pthread_create (&sendId, NULL, icmp_send, pszDst);
+	if (iRet < 0)
+	{
+		printf ("fail to create thread send\n");
+		return -1;
+	}
+
+	iRet = pthread_create (&rcvId, NULL, icmp_rcv, NULL);
+	if (iRet < 0)
+	{
+		printf ("fail to create thread rcv\n");
+		return -1;
+	}
+
+	pthread_join (sendId, NULL);
+	pthread_join (rcvId, NULL);
+
+	return 0;
+}
